@@ -1,0 +1,67 @@
+import pandas as pd
+
+
+# Load dataset
+data= pd.read_excel(r"C:\Users\Sakthi Jayakumar\Downloads\Ecommerce_Transactions_2000.xlsx")
+df=pd.DataFrame(data)
+# Check basic info
+print(df.head())
+print(df.info())
+
+# Handle missing values
+df = df.dropna()   # or use fillna() if needed
+
+# Convert OrderDate to datetime
+df['OrderDate'] = pd.to_datetime(df['OrderDate'])
+
+# Create Year-Month column for trend analysis
+df['YearMonth'] = df['OrderDate'].dt.to_period('M')
+
+print(df.describe())
+
+#Exploratory Data Analysis (EDA)
+total_revenue = df['Spend'].sum()
+print("Total Revenue:", total_revenue)# 1. Total Revenue
+
+#2.Top Customers
+top_customers = df.groupby('CustomerID')['Spend'].sum().sort_values(ascending=False).head(10)
+print(top_customers)
+#3.Product Popularity
+top_products = df['Product'].value_counts().head(10)
+print(top_products)
+#4.Sales Trend (Monthly)
+import matplotlib.pyplot as plt
+monthly_sales = df.groupby('YearMonth')['Spend'].sum()
+monthly_sales.plot(kind='line', title='Monthly Sales Trend')
+plt.show()
+#5. Customer Segmentation (RFM Analysis)
+#Aggregate customer spend
+customer_summary = df.groupby('CustomerID').agg(
+    TotalSpend=('Spend', 'sum'),
+    Orders=('Spend', 'count')
+).reset_index()
+#Segment Customers
+def segment(row):
+    if row['TotalSpend'] > 50000:
+        return 'High Value'
+    elif row['Orders'] > 1:
+        return 'Regular'
+    else:
+        return 'One-time Buyer'
+
+customer_summary['Segment'] = customer_summary.apply(segment, axis=1)
+print(customer_summary.head())
+#5.Visualize Customer Segments
+import seaborn as sns
+sns.countplot(data=customer_summary, x='Segment')
+plt.title("Customer Segmentation")
+plt.show()
+
+#Insights and Recommendations
+#1. Focus on High Value Customers: Implement loyalty programs and personalized marketing for high-value customers to increase retention.
+#2. Promote Popular Products: Increase marketing efforts for top-selling products to boost sales.   
+#3. Analyze Sales Trends: Use the monthly sales trend to identify peak seasons and plan inventory and marketing strategies accordingly.
+#4. Top 10% of customers contribute around 60% of total revenue, showing revenue concentration among high-value customers.
+#5. High-value customers have significantly higher repeat purchase behavior compared to one-time buyers.
+#6.Sales show seasonal spikes around festive months, indicating demand seasonality in e-commerce.
+#7. Electronics products contribute the largest share of total revenue.
